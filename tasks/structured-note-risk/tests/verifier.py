@@ -301,6 +301,19 @@ def check_intermediates(
                 result["error_class"] = error_class
                 if matched_sibling:
                     result["matched_sibling"] = matched_sibling
+            result = {
+                "term": term_name,
+                "concept": ref_cp.get("concept"),
+                "domain": ref_cp.get("domain"),
+                "expected": ref_value,
+                "actual": agent_value,
+                "status": "CORRECT" if value_correct else "INCORRECT",
+                "match_method": "label",
+            }
+            if not value_correct:
+                result["error_class"] = error_class
+                if matched_sibling:
+                    result["matched_sibling"] = matched_sibling
             checkpoint_results.append(result)
 
         else:
