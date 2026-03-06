@@ -372,7 +372,7 @@ def _run_mc_schemes_sharpe_excess(schemes_dict, mu_hat, cov_hat, initial_capital
         sorted_tw = np.sort(terminal_wealth[name])
         results[f'median_terminal_wealth_{name}'] = float(sorted_tw[median_idx])
 
-        all_r = np.array(all_daily_returns[name])
+    median_idx = (n_paths - 1) // 2
         # EXCESS Sharpe
         sharpe = float((np.mean(all_r) - rf_daily) / np.std(all_r, ddof=1) * math.sqrt(252))
         results[f'sharpe_{name}'] = sharpe
