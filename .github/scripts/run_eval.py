@@ -121,7 +121,19 @@ def run_harbor(task: str, model_cfg: dict) -> dict | None:
         print(f"  [skip] {model_cfg['model']}: {env_key} not set")
         return None
 
-    cmd = ["harbor", "run", "--path", "./tasks", "--task-name", task]
+    # Use a unique job name so we can deterministically find this run's results
+    job_name = f"finance-bench-{task}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')}"
+
+    cmd = [
+        "harbor",
+        "run",
+        "--path",
+        "./tasks",
+        "--task-name",
+        task,
+        "--job-name",
+        job_name,
+    ]
     if "agent" in model_cfg:
         cmd += ["--agent", model_cfg["agent"]]
     else:
@@ -131,24 +143,23 @@ def run_harbor(task: str, model_cfg: dict) -> dict | None:
     print(f"  $ {' '.join(cmd)}")
     subprocess.run(cmd, env=env, check=False)
 
-    # Locate the newest jobs/ subdirectory created by this run
+    # Locate the jobs/ subdirectory for this specific run
     jobs_dir = Path("jobs")
     if not jobs_dir.exists():
         print("  [error] jobs/ directory not found after harbor run")
         return None
 
-    latest_job = max(
-        (d for d in jobs_dir.iterdir() if d.is_dir()),
-        key=lambda d: d.stat().st_mtime,
-        default=None,
-    )
-    if latest_job is None:
+    job_dir = jobs_dir / job_name
+    if not job_dir.exists() or not job_dir.is_dir():
+        print(f"  [error] job directory '{job_dir}' not found for task '{task}'")
         return None
 
-    task_dirs = [d for d in latest_job.iterdir()
-                 if d.is_dir() and d.name.startswith(task)]
+    task_dirs = [
+        d for d in job_dir.iterdir()
+        if d.is_dir() and d.name.startswith(task)
+    ]
     if not task_dirs:
-        print(f"  [error] no trial directory found for task '{task}' in {latest_job}")
+        print(f"  [error] no trial directory found for task '{task}' in {job_dir}")
         return None
 
     task_trial = task_dirs[0]
