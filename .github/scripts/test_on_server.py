@@ -263,7 +263,9 @@ def main() -> None:
 
     fetch_commands = [
         (["git", "fetch", "origin", f"pull/{args.pr_number}/head"], True),
+        (["git", "fetch", "upstream", f"pull/{args.pr_number}/head"], True),
         (["git", "fetch", "origin", args.head_ref], False),
+        (["git", "fetch", "upstream", args.head_ref], False),
     ]
 
     for cmd, is_pull_ref in fetch_commands:
