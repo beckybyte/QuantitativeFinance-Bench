@@ -212,6 +212,14 @@ def process_tasks(changed_tasks: list[str]) -> list[dict]:
         log(f"  Claude-Code: reward={cc['reward']}  tests={cc['tests_passed']}/{cc['tests_total']}")
         benchmarks.append(cc)
 
+        # -- 6. claude-code + haiku --
+        log(">>> Running claude-code (claude-haiku-4-5)...")
+        cc_haiku = run_harbor(task, agent="claude-code", model="anthropic/claude-haiku-4-5-20251001")
+        cc_haiku["agent"] = "claude-code"
+        cc_haiku["model"] = "claude-haiku-4-5"
+        log(f"  Claude-Code (haiku): reward={cc_haiku['reward']}  tests={cc_haiku['tests_passed']}/{cc_haiku['tests_total']}")
+        benchmarks.append(cc_haiku)
+
         results.append({
             "name": task,
             "sanity": {"structure": struct_ok, "canary": canary_ok, "oracle": oracle["reward"]},
