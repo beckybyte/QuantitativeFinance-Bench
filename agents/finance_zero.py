@@ -35,9 +35,11 @@ made harder or not included in the benchmark.
 from __future__ import annotations
 
 import base64
+import os
 import re
 
 import litellm
+litellm.drop_params = True
 
 from harbor.agents.base import BaseAgent
 from harbor.environments.base import BaseEnvironment, ExecResult
@@ -59,7 +61,8 @@ Rules:
 """
 
 # Maximum tokens the LLM may generate. 
-MAX_TOKENS = 4096
+MAX_TOKENS = int(os.environ.get("FINANCE_ZERO_MAX_TOKENS", "4096"))
+TEMPERATURE = float(os.environ.get("FINANCE_ZERO_TEMPERATURE", "0.0"))
 
 # Timeout for executing the generated script inside the sandbox.
 EXEC_TIMEOUT_SEC = 120
@@ -122,15 +125,19 @@ class FinanceZeroAgent(BaseAgent):
         self.logger.info(f"Finance-Zero using model: {model}")
 
         # ── Step 1: Single LLM call ─────────────────────────────────
-        response = await litellm.acompletion(
+        # Some newer models (opus-4-7, gpt-5) reject temperature param.
+        kwargs = dict(
             model=model,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": instruction},
             ],
-            temperature=0.0,
             max_tokens=MAX_TOKENS,
         )
+        # TEMPERATURE < 0 means omit the param entirely
+        if TEMPERATURE >= 0:
+            kwargs["temperature"] = TEMPERATURE
+        response = await litellm.acompletion(**kwargs)
 
         llm_text: str = response.choices[0].message.content or ""
         code = _extract_code(llm_text)
