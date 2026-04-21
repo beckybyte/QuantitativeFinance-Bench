@@ -186,7 +186,9 @@ def run_harbor(
         return {"reward": 0.0, "tests_passed": 0, "tests_total": 0,
                 "cost_usd": None, "elapsed_sec": elapsed, "error": "job dir not found"}
 
-    trials = [d for d in job_dir.iterdir() if d.is_dir() and d.name.startswith(task)]
+    # Harbor truncates long task names in trial dir names, so match by verifier presence
+    # rather than by startswith(task) which fails for long names.
+    trials = [d for d in job_dir.iterdir() if d.is_dir() and (d / "verifier").exists()]
     if not trials:
         return {"reward": 0.0, "tests_passed": 0, "tests_total": 0,
                 "cost_usd": None, "elapsed_sec": elapsed, "error": "no trial dir"}
